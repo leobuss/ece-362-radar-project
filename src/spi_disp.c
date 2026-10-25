@@ -7,19 +7,17 @@
 #define TFT_DC
 #define TFT_RST
 
-void display_init_spi(void)
+void display_init_spi(void) 
 {
-    // initiliaze spi0 at 1 megahz
-    spi_init(spi0, 1000000);
+    spi_init(spi0, 1000000); // 1MHz
 
     //config sck and mosi
     gpio_set_function(TFT_SCK, GPIO_FUNC_SPI);
     gpio_set_function(TFT_MOSI, GPIO_FUNC_SPI);
 
-    // set spi format to 8b mode 0 msb
-    spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST); // 8b mode 0 msb first
 
-    // configure cs, dc, reset as gpio out
+    // configure as gpio out
     gpio_init(TFT_CS);
     gpio_set_dir(TFT_CS, GPIO_OUT);
     gpio_put(TFT_CS, 1);
@@ -29,4 +27,51 @@ void display_init_spi(void)
     gpio_init(TFT_CS);
     gpio_set_dir(TFT_CS, GPIO_OUT);
     gpio_put(TFT_RST, 1);
+}
+
+void lcd_write_command(uint8_t command)
+{
+    gpio_put(TFT_CS, 0); // command mode
+    gpio_put(TFT_DC, 0); // select disp
+    spi_wite_blocking(spi0, &command, 1) // send command
+    gpio_put(TFT_CS, 1); // deselect disp
+}
+
+void lcd_write_data(uint8_t data)
+{
+    gpio_put(TFT_DC, 1); // data mode
+    gpio_put(TFT_CS, 0); // select disp
+    spi_write_blocking(spi0, &data, 1); // send
+    gpio_put(TFT_CS, 1); // deselect disp
+}
+
+void lcd_reset(void)
+{
+    gpio_put(TFT_RST, 0); // hardware rst
+    sleep_ms(20); // at least 10us valid pulse
+    gpio_put(TFT_RST, 1); // release
+    sleep_ms(120); // at least 120ms before sleep out
+}
+
+void lcd_init(void)
+{
+    display_init_spi();
+    lcd_reset();
+    lcd_write_command(0x11); // exit sleep
+    sleep_ms(120); // sleep out transition
+
+    lcd_write_command(0x3A); // pixel format
+    lcd_write_data(0x55); // 16b rgb565
+    lcd_write_command(0x36); // mem access
+    lcd_write_data(0x28); // landscape + bgr order
+    lcd_write_command(0x29); // enable lcd out
+}
+
+lcd_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+{
+    lcd_write_command(0x2A); // column range
+    lcd_write_data(x0 >> 8); // start x hight byte
+    lcd_write_data(x0 & 0xFF); // start x low byte
+    lcd_write_data(x1 >> 8); // end x high byte
+    lcd_write_data(x1 & 0xFF); // end x low byte
 }
