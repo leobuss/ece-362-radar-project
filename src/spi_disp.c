@@ -66,3 +66,12 @@ void lcd_init(void)
     lcd_write_data(0x28); // landscape + bgr order
     lcd_write_command(0x29); // enable lcd out
 }
+
+lcd_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+{
+    lcd_write_command(0x2A); // column range
+    lcd_write_data(x0 >> 8); // start x hight byte
+    lcd_write_data(x0 & 0xFF); // start x low byte
+    lcd_write_data(x1 >> 8); // end x high byte
+    lcd_write_data(x1 & 0xFF); // end x low byte
+}
