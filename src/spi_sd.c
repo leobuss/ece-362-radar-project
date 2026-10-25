@@ -17,7 +17,7 @@ void init_sdspi()
     // init gpios for spi
     gpio_init(SD_MOSI); gpio_init(SD_MISO); gpio_init(SD_SCK); gpio_init(SD_CSn);
     gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_SCK, GPIO_FUNC_SPI);
-    gpio_put(SD_CSn, 1);
+    gpio_set_dir(SD_CSn, GPIO_OUT); gpio_put(SD_CSn, 1);
 
     // init the spi peripheral
     spi_init(spi1, 100000);
