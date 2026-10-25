@@ -52,3 +52,17 @@ void lcd_reset(void)
     gpio_put(TFT_RST, 1); // release
     sleep_ms(120); // at least 120ms before sleep out
 }
+
+void lcd_init(void)
+{
+    display_init_spi();
+    lcd_reset();
+    lcd_write_command(0x11); // exit sleep
+    sleep_ms(120); // sleep out transition
+
+    lcd_write_command(0x3A); // pixel format
+    lcd_write_data(0x55); // 16b rgb565
+    lcd_write_command(0x36); // mem access
+    lcd_write_data(0x28); // landscape + bgr order
+    lcd_write_command(0x29); // enable lcd out
+}
