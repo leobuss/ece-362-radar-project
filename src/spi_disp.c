@@ -1,6 +1,4 @@
-#include "pico/stdlib.h"
-#include "hardware/spi.h"
-#include "hardware/gpio.h"
+#include "header.h"
 
 // tft lcd spi0 (fill out with gpio)
 #define TFT_SCK
