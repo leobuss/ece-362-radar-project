@@ -1,0 +1,22 @@
+{
+    "recommendations": [
+        "platformio.platformio-ide"
+    ],
+    "unwantedRecommendations": [
+        "ms-vscode.cpptools-extension-pack",
+        "anthropic.claude-code",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "saoudrizwan.claude-dev",
+        "RooVeterinaryInc.roo-cline",
+        "Continue.continue",
+        "Codeium.CodeiumVS",
+        "sourcegraph.cody-ai",
+        "TabNine.tabnine-vscode",
+        "AmazonWebServices.amazon-q-vscode",
+        "Google.geminicodeassist",
+        "supermaven.supermaven",
+        "Codium.codium",
+        "augment.vscode-augment"
+    ]
+}
