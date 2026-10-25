@@ -40,3 +40,26 @@ uint8_t sd_transfer(uint8_t data_in)
     spi_write_read_blocking(spi1, &data_in, &output, 1);
     return output;
 }
+
+void sd_select()
+{
+    gpio_put(SD_CSn, 0);
+    sd_transfer(0xFF);
+}
+
+void sd_deselect()
+{
+    gpio_put(SD_CSn, 1);
+    sd_transfer(0xFF);
+}
+
+uint8_t send_sd_command(uint8_t command, uint32_t argument, uint8_t crc)
+{
+    sd_select();
+
+    // format of a data packet - always send 6 bytes at a time
+    uint8_t data[6] = {command, (uint8_t)(argument >> 24), (uint8_t)(argument >> 16), (uint8_t)(argument >> 8), (uint8_t)(argument), crc};
+    spi_write_blocking(spi1, data, 6);
+
+    
+}
