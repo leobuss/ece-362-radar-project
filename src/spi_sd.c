@@ -1,4 +1,5 @@
 #include "header.h"  
+#include "sd_header.h"
 
 #define SD_MOSI 1
 #define SD_MISO 2
@@ -28,7 +29,7 @@ void init_sdspi()
         sd_transfer(0xFF); // send 1s to initalize SD Card
     }
 
-
+    // need to continue later
     
 
     
@@ -53,7 +54,8 @@ void sd_deselect()
     sd_transfer(0xFF);
 }
 
-uint8_t send_sd_command(uint8_t command, uint32_t argument, uint8_t crc)
+uint8_t send_sd_command(uint8_t command, uint32_t argument, uint8_t crc, uint8_t extra_data_len, uint8_t* extra_data)
+// include extra room for return data that is more than 1 byte
 {
     sd_select();
 
@@ -61,5 +63,6 @@ uint8_t send_sd_command(uint8_t command, uint32_t argument, uint8_t crc)
     uint8_t data[6] = {command, (uint8_t)(argument >> 24), (uint8_t)(argument >> 16), (uint8_t)(argument >> 8), (uint8_t)(argument), crc};
     spi_write_blocking(spi1, data, 6);
 
-    
+    // need to continue
+
 }
