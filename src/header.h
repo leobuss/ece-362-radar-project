@@ -6,6 +6,7 @@
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
+#include "hardware/pwm.h"
 
 // tft lcd functions
 void lcd_init(void);
