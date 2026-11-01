@@ -11,7 +11,7 @@ void pwm_start(void){
     slice_num = pwm_gpio_to_slice_num(PWM_PIN);
     pwm_set_wrap(slice_num, wrap); //set frequency
     pwm_set_clkdiv(slice_num, div);
-    pwm_set_chan_level(slice_num, PWM_CHAN_B, (wrap + 1) / 2); //set duty
+    pwm_set_chan_level(slice_num, PWM_CHAN_B, 3750); //set duty
     pwm_set_enabled(slice_num, true);
 }
 
