@@ -1,4 +1,5 @@
 #include "header.h"
+#include "sd_header.h"
 
 // #define DISPLAY_TEST // uncomment to test display func
 #ifdef DISPLAY_TEST

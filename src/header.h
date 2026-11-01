@@ -18,3 +18,12 @@ void lcd_draw_semicircle(int xc, int yc, int radius, uint16_t color);
 // pwm functions
 void pwm_start(void);
 void pwm_seek(int pos);
+
+
+// sd card functions
+void init_spi();
+bool init_sd_spi();
+uint8_t sd_transfer(uint8_t data_in);
+void sd_select();
+void sd_deselect();
+uint8_t send_sd_command(uint8_t command, uint32_t argument, uint8_t crc, uint8_t* extra_data, uint8_t extra_data_len);
