@@ -7,6 +7,7 @@
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
+#include "sd_header.h"
 
 // tft lcd functions
 void lcd_init(void);
@@ -27,3 +28,9 @@ uint8_t sd_transfer(uint8_t data_in);
 void sd_select();
 void sd_deselect();
 uint8_t send_sd_command(uint8_t command, uint32_t argument, uint8_t crc, uint8_t* extra_data, uint8_t extra_data_len);
+
+
+//testing functions
+
+void pwm_test(void);
+void display_test(void);

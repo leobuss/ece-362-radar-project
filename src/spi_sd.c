@@ -1,5 +1,4 @@
 #include "header.h"  
-#include "sd_header.h"
 
 #define SD_MOSI 1
 #define SD_MISO 2
