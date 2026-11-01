@@ -3,8 +3,8 @@
 // #define DISPLAY_TEST // uncomment to test display func
 
 // #define DISPLAY_TEST
-// #define PWM_TEST // uncomment to test display func
-#define SD_TEST
+#define PWM_TEST // uncomment to test display func
+// #define SD_TEST
 
 // main
 int main(void)
@@ -14,6 +14,7 @@ int main(void)
         display_test();
     #endif
     #ifdef PWM_TEST
+        printf("calling pwm test");
         pwm_test();
     #endif
     #ifdef SD_TEST

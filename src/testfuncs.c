@@ -39,6 +39,7 @@ void display_test(void)
 }
 
 void pwm_test(void){
+    printf("running pwm_test");
     pwm_start();
     bool inc = true;
     int degree = -90;
