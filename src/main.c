@@ -43,12 +43,32 @@ void display_test(void)
 
 #endif
 
+#define PWM_TEST // uncomment to test display func
+#ifdef PWM_TEST
+void pwm_test(void){
+    pwm_start();
+    bool inc = true;
+    int degree = -90;
+    for(;;){
+        pwm_seek(degree);
+        if((!inc && degree <= -90) || (inc && degree >= 90)){
+            inc = !inc;
+        }
+        degree = degree - 1 + (inc * 2);
+        sleep_ms(50); 
+    }
+}
+#endif
+
 // main
 int main(void)
 {
     stdio_init_all();
     #ifdef DISPLAY_TEST
         display_test();
+    #endif
+    #ifdef PWM_TEST
+        pwm_test();
     #endif
     while (true){
         tight_loop_contents();

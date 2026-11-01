@@ -6,7 +6,7 @@ uint slice_num;
 #define div 60
 #define wrap 49999
 
-void pwm_init(void){
+void pwm_start(void){
     gpio_set_function(PWM_PIN, GPIO_FUNC_PWM);
     slice_num = pwm_gpio_to_slice_num(PWM_PIN);
     pwm_set_wrap(slice_num, wrap); //set frequency

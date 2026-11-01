@@ -16,5 +16,5 @@ void lcd_draw_line(int x0, int y0, int x1, int y1, uint16_t color);
 void lcd_draw_semicircle(int xc, int yc, int radius, uint16_t color);
 
 // pwm functions
-void pwm_init(void);
+void pwm_start(void);
 void pwm_seek(int pos);
