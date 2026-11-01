@@ -49,6 +49,6 @@ void pwm_test(void){
             inc = !inc;
         }
         degree = degree - 1 + (inc * 2);
-        sleep_ms(50); 
+        sleep_ms(10); 
     }
 }

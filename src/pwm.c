@@ -11,7 +11,7 @@ void pwm_start(void){
     slice_num = pwm_gpio_to_slice_num(PWM_PIN);
     pwm_set_wrap(slice_num, wrap); //set frequency
     pwm_set_clkdiv(slice_num, div);
-    pwm_set_chan_level(slice_num, PWM_CHAN_A, (wrap + 1) / 2); //set duty
+    pwm_set_chan_level(slice_num, PWM_CHAN_B, (wrap + 1) / 2); //set duty
     pwm_set_enabled(slice_num, true);
 }
 
@@ -23,5 +23,5 @@ void pwm_seek(int pos){
     if(pos < -90){
         pos = -90;
     }
-    pwm_set_chan_level(slice_num, PWM_CHAN_A, (pos + 90) * (wrap + 1));
+    pwm_set_chan_level(slice_num, PWM_CHAN_B, (2500 + (pos + 90) / 180.0 * 2500));
 }

@@ -10,6 +10,8 @@
 int main(void)
 {
     stdio_init_all();
+
+    sleep_ms(1000);
     #ifdef DISPLAY_TEST
         display_test();
     #endif
@@ -19,7 +21,7 @@ int main(void)
     #endif
     #ifdef SD_TEST
         init_spi();
-        if(init_sd_spi) printf("SD card initialized");
+        if(init_sd_spi()) printf("SD card initialized");
         else printf("SD card failed to initialize");
     #endif
     while (true){
