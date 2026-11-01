@@ -3,8 +3,8 @@
 // #define DISPLAY_TEST // uncomment to test display func
 
 // #define DISPLAY_TEST
-#define PWM_TEST // uncomment to test display func
-// #define SD_TEST
+// #define PWM_TEST // uncomment to test display func
+#define SD_TEST
 
 // main
 int main(void)
@@ -20,9 +20,12 @@ int main(void)
         pwm_test();
     #endif
     #ifdef SD_TEST
+        printf("initializing spi\n");
+        fflush(stdout);
         init_spi();
-        if(init_sd_spi()) printf("SD card initialized");
-        else printf("SD card failed to initialize");
+        printf("running SD card test\n");
+        if(init_sd_spi()) {printf("SD card initialized\n"); fflush(stdout);}
+        else {printf("\nSD card failed to initialize\n"); fflush(stdout);}
     #endif
     while (true){
         tight_loop_contents();

@@ -1,9 +1,9 @@
 #include "header.h"  
 
-#define SD_MOSI 1
-#define SD_MISO 2
-#define SD_SCK 3
-#define SD_CSn 4
+#define SD_MOSI 31
+#define SD_MISO 28
+#define SD_SCK 30
+#define SD_CSn 29
 
 struct reading
 {
@@ -14,8 +14,14 @@ struct reading
 
 void init_spi()
 {
-    gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_SCK, GPIO_FUNC_SPI);
-    gpio_set_dir(SD_CSn, GPIO_OUT); gpio_put(SD_CSn, 1);
+    gpio_init(SD_CSn); gpio_init(SD_MOSI); gpio_init(SD_MISO); gpio_init(SD_SCK);
+    gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_MISO, GPIO_FUNC_SPI); gpio_set_function(SD_SCK, GPIO_FUNC_SPI);
+    gpio_pull_up(SD_MISO);
+    gpio_pull_up(SD_MOSI);
+    gpio_put(SD_CSn, 1); gpio_set_dir(SD_CSn, GPIO_OUT); 
+    gpio_pull_up(SD_CSn);
+    
+  
 
     spi_init(spi1, 400000);
     spi_set_format(spi1, 8, 0, 0, SPI_MSB_FIRST);
@@ -24,21 +30,33 @@ void init_spi()
 
 bool init_sd_spi()
 {
+    
+    gpio_put(SD_CSn, 1);
+    sleep_ms(10);
+
     for (int i = 0; i < 10; i++)
     {
         sd_transfer(0xFF); // send 1s to initalize SD Card
     }
 
     // enter spi idle mode
-    uint8_t r = send_sd_command(CMD0, 0, 0x95, NULL, 0); // 0x95 is required CRC byte
-    sd_deselect();
-    if (r != 0x01) return false;
+    uint8_t r = 0xFF; // 0x95 is required CRC byte
+    for (int i = 0; i < 10; i++)
+    {
+        r = send_sd_command(CMD0, 0, 0x95, NULL, 0);
+        sd_deselect();
+        if (r == 0x01) {
+            break;
+        }
+        sleep_ms(10);
+    }
+    if (r != 0x01) {printf("r != 0x01; r = 0x%02X", r); return false;}
 
     // check card version and voltage to ensure proper card
     uint8_t data[4]; 
     r = send_sd_command(CMD8, 0x1AA, 0x87, data, 4); // 0x87 is required CRC byte
     sd_deselect();
-    if (r != 0x01 || data[2] != 0x01 || data[3] != 0xAA) {return false;}
+    if (r != 0x01 || data[2] != 0x01 || data[3] != 0xAA) {printf("r != 0x01 || data[2] != 0x01 || data[3] != 0xAA"); return false;}
 
     // wait for card to initialize
     bool ready = false;
@@ -47,7 +65,7 @@ bool init_sd_spi()
     {
         r = send_sd_command(CMD55, 0, 0x01, NULL, 0);
         sd_deselect();
-        if (r != 0x01 && r != 0x00) return false;
+        if (r != 0x01 && r != 0x00) {printf("r != 0x01 && r != 0x00\n"); return false;}
 
         r = send_sd_command(ACMD41, 0x40000000, 0x01, NULL, 0);
         sd_deselect();
@@ -56,19 +74,18 @@ bool init_sd_spi()
             ready = true;
             break;
         }
-        if (r != 0x01) return false;
+        if (r != 0x01){printf("r != 0x01\n r = 0x%02X", r); return false;} 
 
         sleep_ms(10);
     }
 
-    if (!ready) return false;
+    if (!ready) {printf("not ready\n"); return false;}
 
     uint8_t ocr[4];
     r = send_sd_command(CMD58, 0, 0x01, ocr, 4);
     sd_deselect();
 
-    if (r != 0x00 || (ocr[0] & 0xC0) != 0xC0)
-        return false;
+    if (r != 0x00 || (ocr[0] & 0xC0) != 0xC0){printf("r != 0x00 || (ocr[0] & 0xC0) != 0xC0\n"); return false;}
 
     return true;
 
