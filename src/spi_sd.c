@@ -15,7 +15,7 @@ struct reading
 
 void init_spi_sdcard() {
     gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_MISO, GPIO_FUNC_SPI); gpio_set_function(SD_SCK, GPIO_FUNC_SPI);
-    gpio_set_function(SD_CSn, GPIO_FUNC_SIO); gpio_put(SD_CSn, 1);  (SD_CSn, GPIO_OUT);
+    gpio_set_function(SD_CSn, GPIO_FUNC_SIO); gpio_put(SD_CSn, 1);  gpio_set_dir(SD_CSn, GPIO_OUT);
     spi_init(spi1, 400000); spi_set_format(spi1, 8, 0, 0, SPI_MSB_FIRST);
 }
 

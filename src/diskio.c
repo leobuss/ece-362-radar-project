@@ -34,8 +34,9 @@ void spi_clear_rxfifo(spi_inst_t *s) {
 // reading the value from the SPI_DR and returning that value.
 uint8_t sdcard_write(uint8_t b)
 {
-    spi_write_blocking(sd, &b, 1);
-    return (uint8_t)spi_get_hw(sd)->dr;
+    uint8_t response = 0xFF;
+    spi_write_read_blocking(sd, &b, &response, 1);
+    return response;
 }
 
 // uint8_t sdcard_read(void)
