@@ -9,6 +9,8 @@
 #include "hardware/pwm.h"
 #include "sd_header.h"
 #include "i2c.h"    
+#include "ff.h"
+#include "diskio.h"
 
 // tft lcd functions
 void lcd_init(void);

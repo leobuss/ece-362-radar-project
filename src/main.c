@@ -28,7 +28,7 @@ int main(void)
         else {printf("\nSD card failed to initialize\n"); fflush(stdout);}
     #endif
     #ifdef I2C_TEST
-    i2c_test();
+        i2c_test();
     #endif
     while (true){
         tight_loop_contents();
