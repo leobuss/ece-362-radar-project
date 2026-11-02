@@ -8,6 +8,7 @@
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
 #include "sd_header.h"
+#include "i2c.h"    
 
 // tft lcd functions
 void lcd_init(void);

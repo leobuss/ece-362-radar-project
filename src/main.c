@@ -5,7 +5,7 @@
 // #define DISPLAY_TEST
 // #define PWM_TEST // uncomment to test display func
 #define SD_TEST
-
+//#define I2C_TEST 
 // main
 int main(void)
 {
@@ -27,8 +27,12 @@ int main(void)
         if(init_sd_spi()) {printf("SD card initialized\n"); fflush(stdout);}
         else {printf("\nSD card failed to initialize\n"); fflush(stdout);}
     #endif
+    #ifdef I2C_TEST
+    i2c_test();
+    #endif
     while (true){
         tight_loop_contents();
     }
+    
     return 0;
 }

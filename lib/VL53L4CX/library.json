@@ -1,0 +1,11 @@
+{
+  "name": "VL53L4CX",
+  "version": "1.1.0",
+  "description": "STMicroelectronics VL53L4CX driver (from github.com/stm32duino/VL53L4CX, unmodified) with Arduino/Wire shims for the Pico SDK",
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "srcDir": "src",
+    "includeDir": "src"
+  }
+}
