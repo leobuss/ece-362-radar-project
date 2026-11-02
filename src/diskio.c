@@ -5,7 +5,7 @@
 #include "diskio.h"		/* Declarations of disk functions */
 #include <stdio.h>
 
-spi_inst_t *sd = spi0; // the SPI interface to use for the SD card
+spi_inst_t *sd = spi1; // the SPI interface to use for the SD card
 
 // Weak definitions for the functions that must be implemented elsewhere
 // to allow the SPI interface for the SD card to work.
@@ -152,7 +152,7 @@ DSTATUS disk_initialize (
         return RES_NOTRDY;
     disable_sdcard();
     sdcard_init_clock();
-    sdcard_io_high_speed();
+    
     spi_clear_rxfifo(sd);
     enable_sdcard();
     value = sdcard_cmd(0, 0x00000000, 0x95); // Go to idle state
@@ -180,6 +180,7 @@ DSTATUS disk_initialize (
     enable_sdcard();
     value = sdcard_cmd(16, 0x00000200, 0x01); // set block size [expect 0x00]
     disable_sdcard();
+    sdcard_io_high_speed();
 
     sdcard_status = RES_OK;
     return RES_OK;

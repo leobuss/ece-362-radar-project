@@ -1,7 +1,7 @@
 #include "header.h"  
 
 #define SD_MOSI 31
-#define SD_MISO 28
+#define SD_MISO 28 // add in 10k ohm pull up
 #define SD_SCK 30
 #define SD_CSn 29
 
@@ -13,22 +13,32 @@ struct reading
 };
 
 void init_spi_sdcard() {
-    // fill in.
+    gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_MISO, GPIO_FUNC_SPI); gpio_set_function(SD_SCK, GPIO_FUNC_SPI);
+    gpio_set_function(SD_CSn, GPIO_FUNC_SIO); gpio_put(SD_CSn, 1);  (SD_CSn, GPIO_OUT);
+    spi_init(spi1, 400000); spi_set_format(spi1, 8, 0, 0, SPI_MSB_FIRST);
 }
 
 void disable_sdcard() {
-    // fill in.
+    gpio_put(SD_CSn, 1);
+    sdcard_write(0xff);
+    gpio_put(SD_MOSI, 1);
+    gpio_set_dir(SD_MOSI, GPIO_OUT);
+    gpio_set_function(SD_MOSI, GPIO_FUNC_SIO);
+    
+    
 }
 
 void enable_sdcard() {
-    // fill in.
+    gpio_put(SD_CSn, 0);
+    gpio_set_function(SD_MOSI, GPIO_FUNC_SPI);
 }
 
 void sdcard_io_high_speed() {
-    // fill in.
+    spi_set_baudrate(spi1, 12000000);
 }
 
 void init_sdcard_io() {
-    // fill in.
+    init_spi_sdcard();
+    disable_sdcard();
 }
 
