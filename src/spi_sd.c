@@ -30,8 +30,9 @@ void disable_sdcard() {
 }
 
 void enable_sdcard() {
-    gpio_put(SD_CSn, 0);
+    
     gpio_set_function(SD_MOSI, GPIO_FUNC_SPI);
+    gpio_put(SD_CSn, 0);
 }
 
 void sdcard_io_high_speed() {
