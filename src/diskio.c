@@ -37,7 +37,7 @@ uint8_t sdcard_write(uint8_t b)
     uint8_t response = 0xFF;
     spi_write_read_blocking(sd, &b, &response, 1);
     return response;
-}
+}   
 
 // uint8_t sdcard_read(void)
 // {

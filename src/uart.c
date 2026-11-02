@@ -72,7 +72,7 @@ int _read(__unused int handle, char *buffer, int length) {
     }
 
     seridx = 0;
-    return length;
+    return num;
 }
 
 int _write(__unused int handle, char *buffer, int length) {
