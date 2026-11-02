@@ -25,12 +25,8 @@ void pwm_seek(int pos);
 
 
 // sd card functions
-void init_spi();
-bool init_sd_spi();
-uint8_t sd_transfer(uint8_t data_in);
-void sd_select();
-void sd_deselect();
-uint8_t send_sd_command(uint8_t command, uint32_t argument, uint8_t crc, uint8_t* extra_data, uint8_t extra_data_len);
+void sd_test();
+uint8_t sdcard_write(uint8_t b);
 
 
 //testing functions

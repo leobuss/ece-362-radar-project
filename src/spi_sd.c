@@ -12,6 +12,7 @@ struct reading
     uint32_t time;
 };
 
+
 void init_spi_sdcard() {
     gpio_set_function(SD_MOSI, GPIO_FUNC_SPI); gpio_set_function(SD_MISO, GPIO_FUNC_SPI); gpio_set_function(SD_SCK, GPIO_FUNC_SPI);
     gpio_set_function(SD_CSn, GPIO_FUNC_SIO); gpio_put(SD_CSn, 1);  (SD_CSn, GPIO_OUT);
@@ -40,5 +41,16 @@ void sdcard_io_high_speed() {
 void init_sdcard_io() {
     init_spi_sdcard();
     disable_sdcard();
+}
+
+
+void sd_test()
+{
+    init_uart();
+    init_uart_irq();
+    init_sdcard_io();
+    command_shell();
+
+    for(;;);
 }
 

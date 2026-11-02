@@ -22,10 +22,7 @@ int main(void)
     #ifdef SD_TEST
         printf("initializing spi\n");
         fflush(stdout);
-        init_spi();
-        printf("running SD card test\n");
-        if(init_sd_spi()) {printf("SD card initialized\n"); fflush(stdout);}
-        else {printf("\nSD card failed to initialize\n"); fflush(stdout);}
+        sd_test();
     #endif
     #ifdef I2C_TEST
         i2c_test();
