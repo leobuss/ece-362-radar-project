@@ -34,8 +34,9 @@ void spi_clear_rxfifo(spi_inst_t *s) {
 // reading the value from the SPI_DR and returning that value.
 uint8_t sdcard_write(uint8_t b)
 {
-    spi_write_blocking(sd, &b, 1);
-    return (uint8_t)spi_get_hw(sd)->dr;
+    uint8_t received = 0xFF;
+    spi_write_read_blocking(sd, &b, &received, 1);
+    return received;
 }   
 
 // uint8_t sdcard_read(void)
@@ -164,7 +165,7 @@ DSTATUS disk_initialize (
     value = sdcard_cmd(8, 0x000001aa, 0x87); // Check voltage range
     value = sdcard_r3();
     disable_sdcard();
-    printf("reached past restart check");
+    printf("\nreached past restart check\n");
 
     do {
         enable_sdcard();
@@ -206,6 +207,7 @@ DSTATUS disk_status (
     if (sdcard_cmd(58, 0x00000000, 0x01) == 0) {
         sdcard_r3();
         return RES_OK;
+        disable_sdcard();
     }
     disable_sdcard();
 
