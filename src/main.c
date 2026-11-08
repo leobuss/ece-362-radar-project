@@ -1,8 +1,6 @@
 #include "header.h"
 
 // #define DISPLAY_TEST // uncomment to test display func
-
-// #define DISPLAY_TEST
 // #define PWM_TEST // uncomment to test display func
 #define SD_TEST
 // #define I2C_TEST 
