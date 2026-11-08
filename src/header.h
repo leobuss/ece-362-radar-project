@@ -20,6 +20,7 @@ void lcd_draw_line(int x0, int y0, int x1, int y1, uint16_t color);
 void lcd_draw_semicircle(int xc, int yc, int radius, uint16_t color);
 void lcd_draw_dot(int xc, int yc, int radius, uint16_t color);
 void radar_draw_object(int servo_angle, int distance_mm);
+void radar_draw_background(void);
 void radar_update(int servo_angle, int distance_mm);
 
 // pwm functions

@@ -67,8 +67,8 @@ void radar_test(void)
         return;
     }
 
-    // draw initial radar background
-    display_test();
+    // draw static radar grid once
+    radar_draw_background();
 
     // servo position and movement direction
     int angle = -90;

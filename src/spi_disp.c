@@ -13,9 +13,56 @@
 #define RED 0xF800
 #define BLUE 0x001F
 
+// compact 2-bit memory of the static radar background
+#define LCD_WIDTH 320
+#define LCD_HEIGHT 240
+
+static uint8_t radar_bg[LCD_WIDTH * LCD_HEIGHT / 4];
+static bool radar_recording = false;
+
+// save background colors using 2 bits per pixel
+static void radar_save_bg_pixel(int x, int y, uint16_t color)
+{
+    if (x < 0 || x >= LCD_WIDTH || y < 0 || y >= LCD_HEIGHT)
+        return;
+
+    int pixel = y * LCD_WIDTH + x;
+    int byte = pixel / 4;
+    int shift = (pixel % 4) * 2;
+
+    uint8_t code = 0;
+
+    if (color == 0x0280) code = 1;
+    else if (color == 0x03E0) code = 2;
+    else if (color == 0x07E0) code = 3;
+
+    radar_bg[byte] =
+        (radar_bg[byte] & ~(3u << shift)) | (code << shift);
+}
+
+// retrieve the original background color at any pixel
+static uint16_t radar_get_bg_pixel(int x, int y)
+{
+    if (x < 0 || x >= LCD_WIDTH || y < 0 || y >= LCD_HEIGHT)
+        return BLACK;
+
+    int pixel = y * LCD_WIDTH + x;
+    int shift = (pixel % 4) * 2;
+
+    uint8_t code = (radar_bg[pixel / 4] >> shift) & 3;
+
+    switch (code)
+    {
+        case 1: return 0x0280;
+        case 2: return 0x03E0;
+        case 3: return 0x07E0;
+        default: return BLACK;
+    }
+}
+
 void display_init_spi(void) 
 {
-    spi_init(spi0, 1000000); // 1MHz
+    spi_init(spi0, 10000000); // 10MHz
 
     //config sck and mosi
     gpio_set_function(TFT_SCK, GPIO_FUNC_SPI);
@@ -114,6 +161,10 @@ void lcd_draw_pixel(int x, int y, uint16_t color)
     if (x < 0 || x >= 320 || y < 0 || y >= 240)
     {
         return;
+    }
+    if (radar_recording)
+    {
+        radar_save_bg_pixel(x, y, color);
     }
     lcd_set_window(x, y, x, y);
     lcd_write_data(color >> 8); // color high byte
@@ -225,45 +276,27 @@ void radar_draw_object(int servo_angle, int distance_mm)
     lcd_draw_dot(x, y, 3, 0xF800);
 }
 
-// update radar sweep and detected obkects
-void radar_update(int servo_angle, int distance_mm)
+// initialize the static radar grid and save its background colors
+void radar_draw_background(void)
 {
-    // radar dimensions
+    memset(radar_bg, 0, sizeof(radar_bg));
+
+    lcd_fill_screen(BLACK);
+
     const int xc = 160;
     const int yc = 205;
     const int radius = 140;
 
-    // remember previous sweep angle
-    static int prev_angle = -1;
+    // start recording the static grid pixels
+    radar_recording = true;
 
-    // store detected distances at 5-degree intervals
-    static int detections[37] = {0};
-
-    // convert servo angle (-90 to 90) to radar angle (0 to 180)
-    int radar_angle = servo_angle + 90;
-
-    // keep angle within radar bounds
-    if (radar_angle < 0) radar_angle = 0;
-    if (radar_angle > 180) radar_angle = 180;
-
-    // erase previous yellow scanning line
-    if (prev_angle >= 0)
-    {
-        float old_rad = prev_angle * 3.14159265f / 180.0f;
-
-        int old_x = xc + radius * cosf(old_rad);
-        int old_y = yc - radius * sinf(old_rad);
-
-        lcd_draw_line(xc, yc, old_x, old_y, 0x0000);
-    }
-
-    // restore green radar rings
+    // range rings
     lcd_draw_semicircle(xc, yc, 35, 0x03E0);
     lcd_draw_semicircle(xc, yc, 70, 0x03E0);
     lcd_draw_semicircle(xc, yc, 105, 0x03E0);
     lcd_draw_semicircle(xc, yc, 140, 0x07E0);
 
-    // restore green radial lines
+    // radial lines
     for (int angle = 30; angle <= 150; angle += 30)
     {
         float rad = angle * 3.14159265f / 180.0f;
@@ -274,34 +307,164 @@ void radar_update(int servo_angle, int distance_mm)
         lcd_draw_line(xc, yc, x, y, 0x0280);
     }
 
-    // restore horizontal baseline
+    // horizontal baseline
     lcd_draw_line(20, 205, 300, 205, 0x07E0);
 
-    // save valid object detection
-    if (distance_mm > 0 && distance_mm <= 6000)
-    {
-        int index = (radar_angle + 2) / 5;
-        detections[index] = distance_mm;
-    }
+    // stop recording; subsequent updates won't change the grid map
+    radar_recording = false;
+}
 
-    // redraw all stored detected objects
+// persistent detection memory
+static int radar_distances[37] = {0};
+static int radar_dot_x[37];
+static int radar_dot_y[37];
+static int radar_prev_angle = -1;
+
+// returns the correct pixel color without redrawing the whole grid
+static uint16_t radar_pixel_color(int x, int y, bool sweep)
+{
+    // detected objects take priority over the yellow sweep
     for (int i = 0; i < 37; i++)
     {
-        if (detections[i] > 0)
-        {
-            int angle = i * 5 - 90;
-            radar_draw_object(angle, detections[i]);
-        }
+        if (radar_distances[i] <= 0)
+            continue;
+
+        int dx = x - radar_dot_x[i];
+        int dy = y - radar_dot_y[i];
+
+        if (dx*dx + dy*dy <= 9)
+            return RED;
     }
 
-    // draw new yellow scanning line
-    float rad = radar_angle * 3.14159265f / 180.0f;
+    if (sweep)
+        return 0xFFE0;
 
-    int x = xc + radius * cosf(rad);
-    int y = yc - radius * sinf(rad);
+    return radar_get_bg_pixel(x, y);
+}
 
-    lcd_draw_line(xc, yc, x, y, 0xFFE0);
+// restore or draw a sweep line using the current detection map
+static void radar_paint_sweep(int angle, bool yellow)
+{
+    const int xc = 160;
+    const int yc = 205;
+    const int radius = 140;
 
-    // remember current angle for next update
-    prev_angle = radar_angle;
+    float rad = angle * 3.14159265f / 180.0f;
+
+    int x1 = xc + radius * cosf(rad);
+    int y1 = yc - radius * sinf(rad);
+
+    // Bresenham line drawing
+    int x = xc;
+    int y = yc;
+
+    int dx = abs(x1 - x);
+    int dy = abs(y1 - y);
+    int sx = (x < x1) ? 1 : -1;
+    int sy = (y < y1) ? 1 : -1;
+    int err = dx - dy;
+
+    while (true)
+    {
+        uint16_t color = radar_pixel_color(x, y, yellow);
+        lcd_draw_pixel(x, y, color);
+
+        if (x == x1 && y == y1)
+            break;
+
+        int e2 = 2 * err;
+
+        if (e2 > -dy)
+        {
+            err -= dy;
+            x += sx;
+        }
+
+        if (e2 < dx)
+        {
+            err += dx;
+            y += sy;
+        }
+    }
+}
+
+// repaint only the pixels around a changed detection
+static void radar_paint_dot_area(int xc, int yc)
+{
+    for (int y = yc - 3; y <= yc + 3; y++)
+    {
+        for (int x = xc - 3; x <= xc + 3; x++)
+        {
+            if ((x-xc)*(x-xc) + (y-yc)*(y-yc) <= 9)
+            {
+                lcd_draw_pixel(
+                    x, y, radar_pixel_color(x, y, false)
+                );
+            }
+        }
+    }
+}
+
+// initialize the current detection map and update the radar
+void radar_update(int servo_angle, int distance_mm)
+{
+    const int xc = 160;
+    const int yc = 205;
+    const int radius = 140;
+
+    int radar_angle = servo_angle + 90;
+
+    if (radar_angle < 0) radar_angle = 0;
+    if (radar_angle > 180) radar_angle = 180;
+
+    int index = (radar_angle + 2) / 5;
+
+    // remember previous detection position at this angle
+    int old_distance = radar_distances[index];
+    int old_x = radar_dot_x[index];
+    int old_y = radar_dot_y[index];
+
+    // update only the angle currently being scanned
+    if (distance_mm > 0 && distance_mm <= 6000)
+    {
+        radar_distances[index] = distance_mm;
+
+        float rad = (index * 5) * 3.14159265f / 180.0f;
+        float r = ((float)distance_mm / 6000.0f) * radius;
+
+        radar_dot_x[index] = xc + r * cosf(rad);
+        radar_dot_y[index] = yc - r * sinf(rad);
+    }
+    else if (distance_mm == TOF_NO_TARGET)
+    {
+        radar_distances[index] = 0;
+    }
+    // TOF_ERROR preserves the previous detection
+
+    // restore only the previous yellow sweep
+    if (radar_prev_angle >= 0)
+    {
+        radar_paint_sweep(radar_prev_angle, false);
+    }
+
+    // restore the previous detection location if it changed
+    if (old_distance > 0 &&
+        old_distance != radar_distances[index])
+    {
+        radar_paint_dot_area(old_x, old_y);
+    }
+
+    // draw the detection at its updated location
+    if (radar_distances[index] > 0)
+    {
+        radar_paint_dot_area(
+            radar_dot_x[index], radar_dot_y[index]
+        );
+    }
+
+    // draw the new sweep without covering red detection dots
+    radar_paint_sweep(radar_angle, true);
+
+    // save current angle for the next update
+    radar_prev_angle = radar_angle;
 }
