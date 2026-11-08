@@ -6,7 +6,7 @@
 // #define PWM_TEST // uncomment to test display func
 #define SD_TEST
 // #define I2C_TEST 
-// #define RADaR_TeST
+// #define RADAR_TeST
 // main
 int main(void)
 {
