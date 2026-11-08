@@ -178,3 +178,130 @@ void lcd_draw_semicircle(int xc, int yc, int radius, uint16_t color)
         lcd_draw_pixel(x, y, color);
     }
 }
+
+// draw filled circular marker for detected obkects
+void lcd_draw_dot(int xc, int yc, int radius, uint16_t color)
+{
+    for (int y = -radius; y <= radius; y++)
+    {
+        for (int x = -radius; x <= radius; x++)
+        {
+            if (x*x + y*y <= radius*radius)
+            {
+                lcd_draw_pixel(xc + x, yc + y, color);
+            }
+        }
+    }
+}
+
+// plot deteteced object based on servo angle and distance
+void radar_draw_object(int servo_angle, int distance_mm)
+{
+    // ignore invalid or out of range readings
+    if (distance_mm <= 0 || distance_mm > 6000)
+    {
+        return;
+    }
+
+    // radar display dimensions
+    int xc = 160;
+    int yc = 205;
+    int radius = 140;
+
+    // convert servo angle (-90 to +90) into radar angle (0 to 180)
+    int radar_angle = servo_angle + 90;
+
+    // convert angle from degrees to radians
+    float rad = radar_angle * 3.14159265f / 180.0f;
+
+    // scale distance (0-6000 mm) to display radius (0-140 pixels)
+    float r = ((float)distance_mm / 6000.0f) * radius;
+
+    // calculate object position on LCD
+    int x = xc + r * cosf(rad);
+    int y = yc - r * sinf(rad);
+
+    // draw red detection marker
+    lcd_draw_dot(x, y, 3, 0xF800);
+}
+
+// update radar sweep and detected obkects
+void radar_update(int servo_angle, int distance_mm)
+{
+    // radar dimensions
+    const int xc = 160;
+    const int yc = 205;
+    const int radius = 140;
+
+    // remember previous sweep angle
+    static int prev_angle = -1;
+
+    // store detected distances at 5-degree intervals
+    static int detections[37] = {0};
+
+    // convert servo angle (-90 to 90) to radar angle (0 to 180)
+    int radar_angle = servo_angle + 90;
+
+    // keep angle within radar bounds
+    if (radar_angle < 0) radar_angle = 0;
+    if (radar_angle > 180) radar_angle = 180;
+
+    // erase previous yellow scanning line
+    if (prev_angle >= 0)
+    {
+        float old_rad = prev_angle * 3.14159265f / 180.0f;
+
+        int old_x = xc + radius * cosf(old_rad);
+        int old_y = yc - radius * sinf(old_rad);
+
+        lcd_draw_line(xc, yc, old_x, old_y, 0x0000);
+    }
+
+    // restore green radar rings
+    lcd_draw_semicircle(xc, yc, 35, 0x03E0);
+    lcd_draw_semicircle(xc, yc, 70, 0x03E0);
+    lcd_draw_semicircle(xc, yc, 105, 0x03E0);
+    lcd_draw_semicircle(xc, yc, 140, 0x07E0);
+
+    // restore green radial lines
+    for (int angle = 30; angle <= 150; angle += 30)
+    {
+        float rad = angle * 3.14159265f / 180.0f;
+
+        int x = xc + radius * cosf(rad);
+        int y = yc - radius * sinf(rad);
+
+        lcd_draw_line(xc, yc, x, y, 0x0280);
+    }
+
+    // restore horizontal baseline
+    lcd_draw_line(20, 205, 300, 205, 0x07E0);
+
+    // save valid object detection
+    if (distance_mm > 0 && distance_mm <= 6000)
+    {
+        int index = (radar_angle + 2) / 5;
+        detections[index] = distance_mm;
+    }
+
+    // redraw all stored detected objects
+    for (int i = 0; i < 37; i++)
+    {
+        if (detections[i] > 0)
+        {
+            int angle = i * 5 - 90;
+            radar_draw_object(angle, detections[i]);
+        }
+    }
+
+    // draw new yellow scanning line
+    float rad = radar_angle * 3.14159265f / 180.0f;
+
+    int x = xc + radius * cosf(rad);
+    int y = yc - radius * sinf(rad);
+
+    lcd_draw_line(xc, yc, x, y, 0xFFE0);
+
+    // remember current angle for next update
+    prev_angle = radar_angle;
+}

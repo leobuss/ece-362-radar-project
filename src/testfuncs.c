@@ -52,3 +52,55 @@ void pwm_test(void){
         sleep_ms(10); 
     }
 }
+
+// integrated radar test: servo + ToF sensor + LCD
+void radar_test(void)
+{
+    // initialize LCD and servo
+    lcd_init();
+    pwm_start();
+
+    // initialize distance sensor
+    if (!tof_init())
+    {
+        printf("ToF initialization failed\n");
+        return;
+    }
+
+    // draw initial radar background
+    display_test();
+
+    // servo position and movement direction
+    int angle = -90;
+    int direction = 1;
+
+    while (true)
+    {
+        // move servo to current angle
+        pwm_seek(angle);
+
+        // allow servo time to move
+        sleep_ms(100);
+
+        // read distance at current angle
+        int distance = tof_read_distance_mm();
+
+        // update LCD sweep and plot detected objects
+        radar_update(angle, distance);
+
+        // move 5 degrees per measurement
+        angle += direction * 5;
+
+        // reverse direction at sweep boundaries
+        if (angle >= 90)
+        {
+            angle = 90;
+            direction = -1;
+        }
+        else if (angle <= -90)
+        {
+            angle = -90;
+            direction = 1;
+        }
+    }
+}

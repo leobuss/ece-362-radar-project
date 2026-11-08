@@ -5,7 +5,8 @@
 // #define DISPLAY_TEST
 // #define PWM_TEST // uncomment to test display func
 #define SD_TEST
-//#define I2C_TEST 
+// #define I2C_TEST 
+// #define RADaR_TeST
 // main
 int main(void)
 {
@@ -26,6 +27,10 @@ int main(void)
     #endif
     #ifdef I2C_TEST
         i2c_test();
+    #endif
+    #ifdef RADAR_TEST
+        printf("Starting integrated radar test \n");
+        radar_test();
     #endif
     while (true){
         tight_loop_contents();
