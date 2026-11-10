@@ -16,6 +16,7 @@ void pwm_start(void){
 }
 
 void pwm_seek(int pos){
+    pos = -pos; //invert Rotation direction
     //Range is +/- 90 degrees
     if(pos > 90){ //clip degree input into bounds
         pos = 90;
@@ -23,5 +24,5 @@ void pwm_seek(int pos){
     if(pos < -90){
         pos = -90;
     }
-    pwm_set_chan_level(slice_num, PWM_CHAN_B, (2500 + (pos + 90) / 180.0 * 2500));
+    pwm_set_chan_level(slice_num, PWM_CHAN_B, (1600 + (pos + 90) / 180.0 * 4450));
 }

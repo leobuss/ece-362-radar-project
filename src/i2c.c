@@ -7,7 +7,7 @@
 #define TOF_I2C   i2c0
 #define TOF_SDA   8
 #define TOF_SCL   9
-#define TOF_XSHUT 10       // sensor on/off pin, -1 if tied high on the breakout
+#define TOF_XSHUT -1       // sensor on/off pin, -1 if tied high on the breakout
  
 #define TOF_ADDR  0x29     // sensor's 7-bit i2c address
 #define TOF_BUDGET_US 50000 // time per measurement (33000 to 200000), longer = more range
