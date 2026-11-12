@@ -10,6 +10,7 @@ int main(void)
 {
     stdio_init_all();
 
+    
     sleep_ms(1000);
     #ifdef DISPLAY_TEST
         display_test();

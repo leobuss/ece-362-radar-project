@@ -7,10 +7,10 @@
 #include "hardware/spi.h"
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
-#include "sd_header.h"
-#include "i2c.h"    
-#include "ff.h"
-#include "diskio.h"
+#include "sd/sd_header.h"
+#include "i2c/i2c.h"    
+#include "sd/ff.h"
+#include "sd/diskio.h"
 
 // tft lcd functions
 void lcd_init(void);

@@ -165,14 +165,12 @@ DSTATUS disk_initialize (
     value = sdcard_cmd(8, 0x000001aa, 0x87); // Check voltage range
     value = sdcard_r3();
     disable_sdcard();
-    printf("\nreached past restart check\n");
 
     do {
         enable_sdcard();
         value = sdcard_cmd(55, 0x40000000, 0x01); // Start initialization
         value = sdcard_cmd(41, 0x40000000, 0x01); // Start initialization
         disable_sdcard();
-        printf("Value: %X\n", value);
     } while(value != 0);
 
     enable_sdcard();

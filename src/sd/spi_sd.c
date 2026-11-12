@@ -25,8 +25,8 @@ void disable_sdcard() {
     gpio_put(SD_CSn, 1);
     sdcard_write(0xff);
     gpio_put(SD_MOSI, 1);
-    gpio_set_dir(SD_MOSI, GPIO_OUT);
     gpio_set_function(SD_MOSI, GPIO_FUNC_SIO);
+    gpio_set_dir(SD_MOSI, GPIO_OUT);
     
     
 }
