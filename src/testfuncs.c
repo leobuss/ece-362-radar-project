@@ -73,6 +73,10 @@ void radar_test(void)
     lcd_init();
     radar_reset();
 
+    // display current radar mode
+    lcd_draw_string(124, 10, "LIVE SCAN", 0x07E0, 0x0000, 16);
+    lcd_draw_string(127, 32, "SCANNING...", 0x07E0, 0x0000, 12);
+
     // simulated servo position and movement direction
     int angle = -90;
     int direction = 1;

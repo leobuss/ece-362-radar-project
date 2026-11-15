@@ -20,9 +20,12 @@ void lcd_draw_pixel(int x, int y, uint16_t color);
 void lcd_draw_line(int x0, int y0, int x1, int y1, uint16_t color);
 void lcd_draw_semicircle(int xc, int yc, int radius, uint16_t color);
 void lcd_draw_dot(int xc, int yc, int radius, uint16_t color);
+void lcd_draw_char(int x, int y, char c, uint16_t color, uint16_t bg, int size);
+void lcd_draw_string(int x, int y, const char *str, uint16_t color, uint16_t bg, int size);
 void radar_draw_background(void);
 void radar_reset(void);
 void radar_update(int servo_angle, int distance_mm);
+
 
 // pwm functions
 void pwm_start(void);
@@ -34,7 +37,7 @@ void sd_test();
 uint8_t sdcard_write(uint8_t b);
 
 
-//testing functions
+// testing functions
 void pwm_test(void);
 void display_test(void);
 void radar_test(void);

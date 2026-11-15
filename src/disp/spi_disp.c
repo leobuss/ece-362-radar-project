@@ -1,4 +1,5 @@
 #include "header.h"
+#include "lcd_fonts.h"
 
 // tft lcd spi0 (fill out with gpio, change if needed)
 #define TFT_SCK 2
@@ -169,6 +170,61 @@ void lcd_draw_pixel(int x, int y, uint16_t color)
     lcd_set_window(x, y, x, y);
     lcd_write_data(color >> 8); // color high byte
     lcd_write_data(color & 0xFF);
+}
+
+
+// draw a single ascii character using a bitmap font
+void lcd_draw_char(int x, int y, char c,
+                   uint16_t color, uint16_t bg, int size)
+{
+    // only support printable ascii characters
+    if (c < ' ' || c > '~')
+        return;
+
+    // supported font heights are 12 and 16 pixels
+    if (size != 12 && size != 16)
+        return;
+
+    int index = c - ' ';
+    int width = size / 2;
+
+    // draw each row of the character bitmap
+    for (int row = 0; row < size; row++)
+    {
+        uint8_t bits;
+
+        if (size == 12)
+            bits = asc2_1206[index][row];
+        else
+            bits = asc2_1608[index][row];
+
+        // draw each pixel based on its corresponding bit
+        for (int col = 0; col < width; col++)
+        {
+            uint16_t pixel_color =
+                (bits & 1) ? color : bg;
+
+            lcd_draw_pixel(x + col, y + row, pixel_color);
+            bits >>= 1;
+        }
+    }
+}
+
+// draw a string of ascii characters from left to right
+void lcd_draw_string(int x, int y, const char *str,
+                     uint16_t color, uint16_t bg, int size)
+{
+    if (size != 12 && size != 16)
+        return;
+
+    while (*str)
+    {
+        lcd_draw_char(x, y, *str, color, bg, size);
+
+        // advance by one character width
+        x += size / 2;
+        str++;
+    }
 }
 
 // fill entire 320x240 display with one rgb565 color
