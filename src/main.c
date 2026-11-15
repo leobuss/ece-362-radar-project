@@ -80,6 +80,7 @@ void process_measurement(int distance)
     if (detected)
     {
         // sd card logging function once the sd card actually works
+        printf("detected object at %lf degrees and %lfm", angle, distance);
     }
 
     // go to next angle
@@ -117,7 +118,8 @@ int main(void)
         pwm_start();
         radar_draw_background();
         // start moving servo
-        schedule_timer(1, move_servo_irq);
+        pwm_seek(-90);
+        schedule_timer(300, servo_settled_irq);
 
         while (true)
         {

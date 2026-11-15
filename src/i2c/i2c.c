@@ -146,3 +146,15 @@ void i2c_test(void)
         printf("distance: %d mm\n", tof_read_distance_mm());
     }
 }
+
+
+// ------------- nonblocking functions ------------------
+
+int tof_begin_measurement(void)
+{
+    return vl53l4cx_c_clear_and_start();
+}
+int tof_read_if_ready(int *distance_mm)
+{
+    // to be implemented
+}

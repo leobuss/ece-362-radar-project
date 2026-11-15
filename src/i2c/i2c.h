@@ -19,6 +19,9 @@ int tof_bus_read(uint8_t addr, uint8_t *dst, size_t len);
  
 // test
 void i2c_test(void);
+
+int tof_begin_measurement(void);
+int tof_read_if_ready(int *distance_mm);
  
 #endif
  
