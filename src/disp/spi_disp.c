@@ -245,37 +245,6 @@ void lcd_draw_dot(int xc, int yc, int radius, uint16_t color)
     }
 }
 
-// plot deteteced object based on servo angle and distance
-void radar_draw_object(int servo_angle, int distance_mm)
-{
-    // ignore invalid or out of range readings
-    if (distance_mm <= 0 || distance_mm > 6000)
-    {
-        return;
-    }
-
-    // radar display dimensions
-    int xc = 160;
-    int yc = 205;
-    int radius = 140;
-
-    // convert servo angle (-90 to +90) into radar angle (0 to 180)
-    int radar_angle = servo_angle + 90;
-
-    // convert angle from degrees to radians
-    float rad = radar_angle * 3.14159265f / 180.0f;
-
-    // scale distance (0-6000 mm) to display radius (0-140 pixels)
-    float r = ((float)distance_mm / 6000.0f) * radius;
-
-    // calculate object position on LCD
-    int x = xc + r * cosf(rad);
-    int y = yc - r * sinf(rad);
-
-    // draw red detection marker
-    lcd_draw_dot(x, y, 3, 0xF800);
-}
-
 // initialize the static radar grid and save its background colors
 void radar_draw_background(void)
 {
@@ -314,17 +283,32 @@ void radar_draw_background(void)
     radar_recording = false;
 }
 
-// persistent detection memory
-static int radar_distances[37] = {0};
-static int radar_dot_x[37];
-static int radar_dot_y[37];
+// clear previous detections and redraw static radar grid for a new scan
+void radar_reset(void)
+{
+    // reset stored object distances and positions
+    memset(radar_distances, 0, sizeof(radar_distances));
+    memset(radar_dot_x, 0, sizeof(radar_dot_x));
+    memset(radar_dot_y, 0, sizeof(radar_dot_y));
+
+    // clear previous sweep position and redraw background
+    radar_prev_angle = -1;
+    radar_draw_background();
+}
+
+// persistent detection memory (one entry per degree)
+#define RADAR_ANGLE_COUNT 181
+
+static int radar_distances[RADAR_ANGLE_COUNT];
+static int radar_dot_x[RADAR_ANGLE_COUNT];
+static int radar_dot_y[RADAR_ANGLE_COUNT];
 static int radar_prev_angle = -1;
 
 // returns the correct pixel color without redrawing the whole grid
 static uint16_t radar_pixel_color(int x, int y, bool sweep)
 {
     // detected objects take priority over the yellow sweep
-    for (int i = 0; i < 37; i++)
+    for (int i = 0; i < RADAR_ANGLE_COUNT; i++)
     {
         if (radar_distances[i] <= 0)
             continue;
@@ -417,7 +401,7 @@ void radar_update(int servo_angle, int distance_mm)
     if (radar_angle < 0) radar_angle = 0;
     if (radar_angle > 180) radar_angle = 180;
 
-    int index = (radar_angle + 2) / 5;
+    int index = radar_angle;
 
     // remember previous detection position at this angle
     int old_distance = radar_distances[index];
@@ -429,7 +413,7 @@ void radar_update(int servo_angle, int distance_mm)
     {
         radar_distances[index] = distance_mm;
 
-        float rad = (index * 5) * 3.14159265f / 180.0f;
+        float rad = index * 3.14159265f / 180.0f;
         float r = ((float)distance_mm / 6000.0f) * radius;
 
         radar_dot_x[index] = xc + r * cosf(rad);
