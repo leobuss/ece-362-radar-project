@@ -68,6 +68,10 @@ void pwm_test(void){
 // timer flag for the radar test
 static volatile bool radar_tick = false;
 
+// interrupt flags for onboard buttons
+static volatile bool mode_pressed = false;
+static volatile bool history_pressed = false;
+
 // fictional historical scans (one distance per degree)
 static const int mock_history[HISTORY_COUNT][181] =
 {
@@ -106,17 +110,51 @@ static bool radar_test_irq(struct repeating_timer *t)
     return true;
 }
 
-// initialize onboard buttons
+// gpio interrupt: signal which button was pressed
+static void radar_button_irq(uint gpio, uint32_t events)
+{
+    if (events & GPIO_IRQ_EDGE_RISE)
+    {
+        if (gpio == MODE_BUTTON)
+        {
+            mode_pressed = true;
+        }
+        else if (gpio == HISTORY_BUTTON)
+        {
+            history_pressed = true;
+        }
+    }
+}
+
+// initialize onboard buttons and enable gpio interrupts
 static void radar_init_buttons(void)
 {
+    // configure mode button as input
     gpio_init(MODE_BUTTON);
     gpio_set_dir(MODE_BUTTON, GPIO_IN);
 
+    // configure history button as input
     gpio_init(HISTORY_BUTTON);
     gpio_set_dir(HISTORY_BUTTON, GPIO_IN);
+
+    // register gpio interrupt handler for mode button
+    gpio_set_irq_enabled_with_callback(
+        MODE_BUTTON,
+        GPIO_IRQ_EDGE_RISE,
+        true,
+        &radar_button_irq
+    );
+
+    // enable history button using same interrupt handler
+    gpio_set_irq_enabled(
+        HISTORY_BUTTON,
+        GPIO_IRQ_EDGE_RISE,
+        true
+    );
 }
 
 // integrated radar test: live scan and mock scan history
+
 void radar_test(void)
 {
     // initialize lcd and buttons
@@ -135,10 +173,6 @@ void radar_test(void)
     int direction = 1;
     int step = 5;
 
-    // remember previous button states
-    bool prev_mode = gpio_get(MODE_BUTTON);
-    bool prev_history = gpio_get(HISTORY_BUTTON);
-
     // set up timer for radar updates every 100ms
     struct repeating_timer timer;
     radar_tick = false;
@@ -152,12 +186,21 @@ void radar_test(void)
 
     while (true)
     {
-        // read current button states
-        bool mode_button = gpio_get(MODE_BUTTON);
-        bool history_button = gpio_get(HISTORY_BUTTON);
+        // safely read and clear interrupt flags
+        uint32_t interrupts = save_and_disable_interrupts();
+
+        bool mode_event = mode_pressed;
+        bool history_event = history_pressed;
+        bool update_due = radar_tick;
+
+        mode_pressed = false;
+        history_pressed = false;
+        radar_tick = false;
+
+        restore_interrupts(interrupts);
 
         // toggle between live scan and scan history
-        if (mode_button && !prev_mode)
+        if (mode_event)
         {
             history_mode = !history_mode;
 
@@ -185,8 +228,7 @@ void radar_test(void)
         }
 
         // cycle through historical scans
-        if (history_mode &&
-            history_button && !prev_history)
+        if (history_mode && history_event && !mode_event)
         {
             history_index++;
 
@@ -202,17 +244,7 @@ void radar_test(void)
             );
         }
 
-        // save button states for next iteration
-        prev_mode = mode_button;
-        prev_history = history_button;
-
-        // safely check and clear timer flag
-        uint32_t interrupts = save_and_disable_interrupts();
-        bool update_due = radar_tick;
-        radar_tick = false;
-        restore_interrupts(interrupts);
-
-        // only update the live radar in live scan mode
+        // only update the radar in live scan mode
         if (update_due && !history_mode)
         {
             // simulate objects at different angles
