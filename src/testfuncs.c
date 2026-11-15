@@ -53,54 +53,80 @@ void pwm_test(void){
     }
 }
 
-// integrated radar test: servo + ToF sensor + LCD
+
+#include "hardware/sync.h"
+
+// timer flag for the radar test
+static volatile bool radar_tick = false;
+
+// timer interrupt: signal that the radar needs another update
+static bool radar_test_irq(struct repeating_timer *t)
+{
+    radar_tick = true;
+    return true; // keep timer running
+}
+
+// integrated radar test: simulated servo + detections + lcd
 void radar_test(void)
 {
-    // initialize LCD and servo
+    // initialize lcd and clear previous detections
     lcd_init();
-    pwm_start();
+    radar_reset();
 
-    // initialize distance sensor
-    if (!tof_init())
+    // simulated servo position and movement direction
+    int angle = -90;
+    int direction = 1;
+    int step = 5;
+
+    // set up timer to trigger radar updates every 100ms
+    struct repeating_timer timer;
+    radar_tick = false;
+
+    if (!add_repeating_timer_ms(100, radar_test_irq, NULL, &timer))
     {
-        printf("ToF initialization failed\n");
+        printf("radar timer failed\n");
         return;
     }
 
-    // draw static radar grid once
-    radar_draw_background();
-
-    // servo position and movement direction
-    int angle = -90;
-    int direction = 1;
-
     while (true)
     {
-        // move servo to current angle
-        pwm_seek(angle);
+        // safely check and clear timer flag
+        uint32_t interrupts = save_and_disable_interrupts();
+        bool update_due = radar_tick;
+        radar_tick = false;
+        restore_interrupts(interrupts);
 
-        // allow servo time to move
-        sleep_ms(100);
-
-        // read distance at current angle
-        int distance = tof_read_distance_mm();
-
-        // update LCD sweep and plot detected objects
-        radar_update(angle, distance);
-
-        // move 5 degrees per measurement
-        angle += direction * 5;
-
-        // reverse direction at sweep boundaries
-        if (angle >= 90)
+        if (update_due)
         {
-            angle = 90;
-            direction = -1;
+            // simulate objects at different angles
+            int distance = TOF_NO_TARGET;
+
+            if (angle == -45)
+                distance = 1800;
+            else if (angle == 0)
+                distance = 3000;
+            else if (angle == 45 && direction == 1)
+                distance = 4500;
+
+            // update sweep line and detection dots on lcd
+            radar_update(angle, distance);
+
+            // move simulated servo to next position
+            angle += direction * step;
+
+            // reverse direction at sweep boundaries
+            if (angle >= 90)
+            {
+                angle = 90;
+                direction = -1;
+            }
+            else if (angle <= -90)
+            {
+                angle = -90;
+                direction = 1;
+            }
         }
-        else if (angle <= -90)
-        {
-            angle = -90;
-            direction = 1;
-        }
+
+        tight_loop_contents();
     }
 }
