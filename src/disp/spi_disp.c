@@ -508,3 +508,36 @@ void radar_update(int servo_angle, int distance_mm)
     // save current angle for the next update
     radar_prev_angle = radar_angle;
 }
+
+
+// display current servo angle and measured distance
+void radar_draw_fields(int servo_angle, int distance_mm)
+{
+    char angle_text[20];
+    char distance_text[20];
+
+    // format current servo angle
+    snprintf(angle_text, sizeof(angle_text),
+             "ANG: %+03d DEG", servo_angle);
+
+    // format distance based on measurement status
+    if (distance_mm > 0 && distance_mm <= 6000)
+    {
+        snprintf(distance_text, sizeof(distance_text),
+                 "DIST: %4d MM", distance_mm);
+    }
+    else if (distance_mm == TOF_ERROR)
+    {
+        snprintf(distance_text, sizeof(distance_text),
+                 "DIST: ERROR  ");
+    }
+    else
+    {
+        snprintf(distance_text, sizeof(distance_text),
+                 "DIST: ---- MM");
+    }
+
+    // draw angle on left and distance on right
+    lcd_draw_string(14, 216, angle_text, GREEN, BLACK, 12);
+    lcd_draw_string(228, 216, distance_text, GREEN, BLACK, 12);
+}

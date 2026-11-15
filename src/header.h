@@ -25,6 +25,7 @@ void lcd_draw_string(int x, int y, const char *str, uint16_t color, uint16_t bg,
 void radar_draw_background(void);
 void radar_reset(void);
 void radar_update(int servo_angle, int distance_mm);
+void radar_draw_fields(int servo_angle, int distance_mm);
 
 
 // pwm functions

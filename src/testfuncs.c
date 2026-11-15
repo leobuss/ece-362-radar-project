@@ -112,8 +112,11 @@ void radar_test(void)
             else if (angle == 45 && direction == 1)
                 distance = 4500;
 
-            // update sweep line and detection dots on lcd
+            // update lcd sweep and plot detected objects
             radar_update(angle, distance);
+
+            // update current angle and distance fields
+            radar_draw_fields(angle, distance);
 
             // move simulated servo to next position
             angle += direction * step;
