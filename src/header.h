@@ -11,6 +11,7 @@
 #include "i2c/i2c.h"    
 #include "sd/ff.h"
 #include "sd/diskio.h"
+#include "pico/time.h"
 
 // tft lcd functions
 void lcd_init(void);
