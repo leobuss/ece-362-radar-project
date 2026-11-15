@@ -8,7 +8,7 @@
 #define TOF_TIMEOUT_MS 500
 
 #define DETECTION_THRESHOLD_MM 3000
-#define SERVO_STEP 5
+#define SERVO_STEP 5 // in degrees
 
 // timer interrupt flags
 static volatile bool servo_settled = false;
