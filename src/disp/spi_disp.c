@@ -541,3 +541,85 @@ void radar_draw_fields(int servo_angle, int distance_mm)
     lcd_draw_string(14, 216, angle_text, GREEN, BLACK, 12);
     lcd_draw_string(228, 216, distance_text, GREEN, BLACK, 12);
 }
+
+
+// draw text centered horizontally on the lcd
+static void lcd_draw_centered(int y, const char *str,
+                              uint16_t color, int size)
+{
+    // calculate text width and starting position
+    int width = strlen(str) * (size / 2);
+    int x = (LCD_WIDTH - width) / 2;
+
+    lcd_draw_string(x, y, str, color, BLACK, size);
+}
+
+// display the current radar mode and status
+void radar_draw_mode(bool history, int minutes_ago)
+{
+    char status[32];
+
+    if (history)
+    {
+        // display history mode title
+        lcd_draw_centered(10, "SCAN HISTORY", GREEN, 16);
+
+        // display age of the selected scan
+        snprintf(status, sizeof(status), "%d MIN%s AGO", minutes_ago, minutes_ago == 1 ? "UTE" : "UTES");
+
+        lcd_draw_centered(32, status, 0xFFE0, 12);
+    }
+    else
+    {
+        // display live scan title and status
+        lcd_draw_centered(10, "LIVE SCAN", GREEN, 16);
+        lcd_draw_centered(32, "SCANNING...", GREEN, 12);
+    }
+}
+
+// display a historical snapshot without a moving sweep
+void radar_show_history(const int distances[181],
+                        int minutes_ago,
+                        int scan_number,
+                        int total_scans)
+{
+    // clear live detections and redraw static grid
+    radar_reset();
+
+    // draw history mode header
+    radar_draw_mode(true, minutes_ago);
+
+    // plot all valid detections from the saved scan
+    for (int i = 0; i < RADAR_ANGLE_COUNT; i++)
+    {
+        int distance = distances[i];
+
+        // skip angles without a valid detection
+        if (distance <= 0 || distance > 6000)
+            continue;
+
+        // convert angle and distance into lcd coordinates
+        float rad = i * 3.14159265f / 180.0f;
+        float r = ((float)distance / 6000.0f) * 140;
+
+        int x = 160 + r * cosf(rad);
+        int y = 205 - r * sinf(rad);
+
+        // draw the saved detection
+        lcd_draw_dot(x, y, 3, RED);
+    }
+
+    // display selected scan number
+    char scan_text[32];
+
+    snprintf(scan_text, sizeof(scan_text),
+             "SCAN: %d/%d", scan_number, total_scans);
+
+    lcd_draw_string(14, 216, scan_text,
+                    GREEN, BLACK, 12);
+
+    // display maximum radar range
+    lcd_draw_string(252, 216, "RANGE: 6M",
+                    GREEN, BLACK, 12);
+}
+

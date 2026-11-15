@@ -26,6 +26,8 @@ void radar_draw_background(void);
 void radar_reset(void);
 void radar_update(int servo_angle, int distance_mm);
 void radar_draw_fields(int servo_angle, int distance_mm);
+void radar_draw_mode(bool history, int minutes_ago);
+void radar_show_history(const int distances[181], int minutes_ago, int scan_number, int total_scans);
 
 
 // pwm functions
