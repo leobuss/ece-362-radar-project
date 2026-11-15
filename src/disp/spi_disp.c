@@ -283,6 +283,14 @@ void radar_draw_background(void)
     radar_recording = false;
 }
 
+// persistent detection memory (one entry per degree)
+#define RADAR_ANGLE_COUNT 181
+
+static int radar_distances[RADAR_ANGLE_COUNT];
+static int radar_dot_x[RADAR_ANGLE_COUNT];
+static int radar_dot_y[RADAR_ANGLE_COUNT];
+static int radar_prev_angle = -1;
+
 // clear previous detections and redraw static radar grid for a new scan
 void radar_reset(void)
 {
@@ -295,14 +303,6 @@ void radar_reset(void)
     radar_prev_angle = -1;
     radar_draw_background();
 }
-
-// persistent detection memory (one entry per degree)
-#define RADAR_ANGLE_COUNT 181
-
-static int radar_distances[RADAR_ANGLE_COUNT];
-static int radar_dot_x[RADAR_ANGLE_COUNT];
-static int radar_dot_y[RADAR_ANGLE_COUNT];
-static int radar_prev_angle = -1;
 
 // returns the correct pixel color without redrawing the whole grid
 static uint16_t radar_pixel_color(int x, int y, bool sweep)

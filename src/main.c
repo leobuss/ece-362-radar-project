@@ -32,8 +32,8 @@ int64_t tof_check_irq(alarm_id_t id, void *data);
 // #define PWM_TEST
 // #define SD_TEST
 // #define I2C_TEST 
-// #define RADAR_TEST
-#define MAIN
+#define RADAR_TEST
+// #define MAIN
 // main
 
 void schedule_timer(uint32_t delay_ms, alarm_callback_t callback)
