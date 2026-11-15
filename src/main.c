@@ -80,7 +80,7 @@ void process_measurement(int distance)
     if (detected)
     {
         // sd card logging function once the sd card actually works
-        printf("detected object at %lf degrees and %lfm", angle, distance);
+        printf("detected object at %d degrees and %dm", angle, distance);
     }
 
     // go to next angle
