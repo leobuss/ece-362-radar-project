@@ -11,8 +11,12 @@
  
 // vl53l4cx distance sensor
 bool tof_init(void);
-int tof_read_distance_mm(void);
- 
+int tof_read_distance_mm(void);          // blocking, waits ~50 ms
+
+// nonblocking: start, then check back later
+int tof_begin_measurement(void);
+int tof_read_if_ready(int *distance_mm);
+
 // raw i2c (used by the library in lib/)
 int tof_bus_write(uint8_t addr, const uint8_t *src, size_t len, bool keep_bus);
 int tof_bus_read(uint8_t addr, uint8_t *dst, size_t len);
@@ -20,8 +24,4 @@ int tof_bus_read(uint8_t addr, uint8_t *dst, size_t len);
 // test
 void i2c_test(void);
 
-int tof_begin_measurement(void);
-int tof_read_if_ready(int *distance_mm);
- 
 #endif
- 

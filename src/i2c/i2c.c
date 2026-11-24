@@ -12,8 +12,11 @@
 #define TOF_ADDR  0x29     // sensor's 7-bit i2c address
 #define TOF_BUDGET_US 50000 // time per measurement (33000 to 200000), longer = more range
 #define TOF_TIMEOUT_MS 500  // give up if a measurement takes longer than this
- 
- 
+
+static bool measuring = false;      // true between tof_begin_measurement() and getting the result
+static absolute_time_t start_time;  // when the current measurement was started
+
+
 // ---------- raw i2c  ----------
  
 // write len bytes. keep_bus = true means no stop bit, so a read can follow
@@ -76,45 +79,24 @@ bool tof_init(void)
         printf("tof: setup failed\n");
         return false;
     }
- 
-    tof_read_distance_mm(); // first result after starting is junk, throw it away
+
+    (void)tof_read_distance_mm(); // first result after starting is junk, throw it away
     printf("tof: ready\n");
     return true;
 }
- 
-// take one new measurement, return distance to the closest object in mm
-// returns TOF_NO_TARGET if nothing seen, TOF_ERROR if something broke
-// (starts measuring when called, so move the servo first)
-int tof_read_distance_mm(void)
+
+// read the finished measurement and return the closest valid object in mm
+// (status 0, 6, 11 = good reading)
+static int tof_get_closest(void)
 {
     vl53l4cx_c_target_t targets[VL53L4CX_C_MAX_TARGETS];
     int count = 0;
-    uint8_t ready = 0;
- 
-    // start a new measurement
-    if (vl53l4cx_c_clear_and_start() != 0)
-    {
-        return TOF_ERROR;
-    }
- 
-    // wait for it to finish
-    for (int ms = 0; !ready; ms++)
-    {
-        if (ms > TOF_TIMEOUT_MS || vl53l4cx_c_data_ready(&ready) != 0)
-        {
-            printf("tof: timeout\n");
-            return TOF_ERROR;
-        }
-        sleep_ms(1);
-    }
- 
-    // get results (the sensor can see up to 4 objects)
+
     if (vl53l4cx_c_get_targets(targets, &count) != 0)
     {
         return TOF_ERROR;
     }
- 
-    // keep the closest valid one (status 0, 6, 11 = good reading)
+
     int closest = TOF_NO_TARGET;
     for (int i = 0; i < count; i++)
     {
@@ -130,10 +112,83 @@ int tof_read_distance_mm(void)
     }
     return closest;
 }
- 
- 
+
+
+// ------------- nonblocking functions ------------------
+
+// start a new measurement and return right away (move the servo first)
+// returns 0 if started, TOF_ERROR if not
+int tof_begin_measurement(void)
+{
+    if (vl53l4cx_c_clear_and_start() != 0)
+    {
+        measuring = false;
+        return TOF_ERROR;
+    }
+    measuring = true;
+    start_time = get_absolute_time();
+    return 0;
+}
+
+// check once if the measurement is done, never waits
+// returns 1 = done, distance in *distance_mm (mm or TOF_NO_TARGET)
+//         0 = not done yet, try again later
+//         TOF_ERROR = sensor problem or timeout (start a new measurement)
+int tof_read_if_ready(int *distance_mm)
+{
+    uint8_t ready = 0;
+
+    if (!measuring)
+    {
+        return TOF_ERROR; // tof_begin_measurement() wasn't called
+    }
+
+    if (vl53l4cx_c_data_ready(&ready) != 0)
+    {
+        measuring = false;
+        return TOF_ERROR;
+    }
+
+    if (!ready)
+    {
+        if (absolute_time_diff_us(start_time, get_absolute_time()) > TOF_TIMEOUT_MS * 1000)
+        {
+            printf("tof: timeout\n");
+            measuring = false;
+            return TOF_ERROR;
+        }
+        return 0;
+    }
+
+    measuring = false;
+    *distance_mm = tof_get_closest();
+    return (*distance_mm == TOF_ERROR) ? TOF_ERROR : 1;
+}
+
+
+// ------------- blocking version ------------------
+
+// start a measurement and wait for it (~50 ms). used by tof_init() and the test
+int tof_read_distance_mm(void)
+{
+    int distance = TOF_ERROR;
+
+    if (tof_begin_measurement() != 0)
+    {
+        return TOF_ERROR;
+    }
+
+    int r;
+    while ((r = tof_read_if_ready(&distance)) == 0)
+    {
+        sleep_ms(1);
+    }
+    return (r == 1) ? distance : TOF_ERROR;
+}
+
+
 // ---------- test ----------
- 
+
 // print distance over and over
 void i2c_test(void)
 {
@@ -145,16 +200,4 @@ void i2c_test(void)
     {
         printf("distance: %d mm\n", tof_read_distance_mm());
     }
-}
-
-
-// ------------- nonblocking functions ------------------
-
-int tof_begin_measurement(void)
-{
-    return vl53l4cx_c_clear_and_start();
-}
-int tof_read_if_ready(int *distance_mm)
-{
-    // to be implemented
 }
